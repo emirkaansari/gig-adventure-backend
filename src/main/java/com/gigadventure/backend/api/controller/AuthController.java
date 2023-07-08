@@ -1,5 +1,6 @@
 package com.gigadventure.backend.api.controller;
 
+import com.gigadventure.backend.api.dto.LoginDto;
 import com.gigadventure.backend.api.dto.RegisterDto;
 import com.gigadventure.backend.api.models.Role;
 import com.gigadventure.backend.api.models.UserEntity;
@@ -10,6 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,5 +46,14 @@ public class AuthController {
         userRepository.save(user);
 
         return new ResponseEntity<>("User register success!", HttpStatus.OK);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody LoginDto loginDto) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginDto.getUsername(),
+                        loginDto.getPassword()));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        return new ResponseEntity<>("User signed in!", HttpStatus.OK);
     }
 }
