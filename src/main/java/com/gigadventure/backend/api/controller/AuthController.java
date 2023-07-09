@@ -1,11 +1,14 @@
 package com.gigadventure.backend.api.controller;
 
+import com.gigadventure.backend.api.dto.AuthResponseDto;
 import com.gigadventure.backend.api.dto.LoginDto;
 import com.gigadventure.backend.api.dto.RegisterDto;
 import com.gigadventure.backend.api.models.Role;
 import com.gigadventure.backend.api.models.UserEntity;
 import com.gigadventure.backend.api.repository.RoleRepository;
 import com.gigadventure.backend.api.repository.UserRepository;
+import com.gigadventure.backend.api.security.JwtGenerator;
+import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -31,6 +34,7 @@ public class AuthController {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private JwtGenerator jwtGenerator;
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody RegisterDto registerDto) {
@@ -54,6 +58,7 @@ public class AuthController {
                 new UsernamePasswordAuthenticationToken(loginDto.getUsername(),
                         loginDto.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        return new ResponseEntity<>("User signed in!", HttpStatus.OK);
+        String token = jwtGenerator.generateToken(authentication);
+        return new ResponseEntity<>(new AuthResponseDto(token), HttpStatus.OK);
     }
 }
