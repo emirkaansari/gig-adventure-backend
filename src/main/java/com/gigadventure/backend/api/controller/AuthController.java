@@ -7,10 +7,11 @@ import com.gigadventure.backend.api.models.Role;
 import com.gigadventure.backend.api.models.UserEntity;
 import com.gigadventure.backend.api.repository.RoleRepository;
 import com.gigadventure.backend.api.repository.UserRepository;
+import com.gigadventure.backend.api.security.JwtAuthenticationFilter;
 import com.gigadventure.backend.api.security.JwtGenerator;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,10 +19,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 
@@ -34,7 +32,8 @@ public class AuthController {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-    private JwtGenerator jwtGenerator;
+    private final JwtGenerator jwtGenerator;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody RegisterDto registerDto) {
@@ -53,12 +52,18 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginDto loginDto) {
+    public ResponseEntity<AuthResponseDto> login(@RequestBody LoginDto loginDto) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginDto.getUsername(),
                         loginDto.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = jwtGenerator.generateToken(authentication);
         return new ResponseEntity<>(new AuthResponseDto(token), HttpStatus.OK);
+    }
+
+    @GetMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletRequest request) {
+        jwtGenerator.invalidateJwtToken(jwtAuthenticationFilter.getJwtFromRequest(request));
+        return ResponseEntity.ok("Logged out successfully");
     }
 }
